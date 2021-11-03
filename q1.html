@@ -1,0 +1,124 @@
+<!--Daniel Ignjatov-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="product.js"></script>
+    <script>
+        $(document).ready(function(){
+            
+            //----Retrieving JSON and Passing Data----//
+            $.getJSON('https://interview-task-api.mca.dev/qr-scanner-codes/alpha-qr-gFpwhsQ8fkY1',function(data){            
+
+                //----Sort JSON Data----//
+                function compare(el1, el2, key) {
+                    return el1[key] == el2[key] ? 0 : (el1[key] < el2[key] ? -1 : 1);
+                }
+                data.sort(function(el1,el2){
+                    return compare(el1, el2, "name")
+                });
+                
+                //----Function to Display Values From JSON Data----//
+                function appendValues(data, index, originStr, name, price, desc, weight){
+                    originStr.toString();
+                    $("#"+originStr).append(name+"<br>")             
+                        .append("Price: $"+price.toFixed(1).replace(".",",")+"<br>")
+                        .append(desc+"<br>")
+                        if(data[index].hasOwnProperty("weight")){
+                            $("#"+originStr).append(weight+"<br>");
+                        }
+                        else{
+                            $("#"+originStr).append("Weight: N/A <br>");
+                        }                     
+                }
+
+                //----Declare Summation Variable for Domestic & Imported Cost/Count ----//
+                var totalCostDom = 0;
+                var totalCountDom = 0;
+
+                var totalCostImp = 0;
+                var totalCountImp = 0;
+
+                //----Declare Amount to Trim Description By----//
+                var descTrim = 10;
+
+                //----Loop Through JSON Objects----//
+                for(i=0; i < data.length; i++){
+                    
+                    //----Declare and Check Variables to List----//
+                    var product = new Product("..."+data[i].name.toString(),
+                                                parseFloat(data[i].price),
+                                                (data[i].description.length > descTrim ? data[i].description.toString().substring(0,descTrim) +"..." : data[i].description.toString()),
+                                                "Weight: "+parseFloat(data[i].weight)+"g",
+                                                data[i].domestic);         
+
+                    //----For Domestic----//
+                    if(product.domestic){
+                        appendValues(data, i, "domestic", product.name, product.price, product.desc, product.weight);
+
+                        totalCostDom = product.addPrice(totalCostDom);
+                        
+                        $("#domesticCost").html(totalCostDom.toFixed(1).replace(".",","))
+                        $("#domesticCount").html(++totalCountDom);
+                    }
+                    
+                    //----For Imported----//
+                    else{
+                        appendValues(data, i, "imported", product.name, product.price, product.desc, product.weight);
+
+                        totalCostImp = product.addPrice(totalCostImp);
+
+                        $("#importedCost").html(totalCostImp.toFixed(1).replace(".",","))
+                        $("#importedCount").html(++totalCountImp);
+                    }
+                   
+                }
+                
+            })
+
+            //----Second Success Handling----//
+            .done(function(data){
+                console.log(data);
+            })
+            
+            //----Error Handling----//
+            .fail(function(){
+                console.log("ERROR");
+            });
+        });
+    </script>
+</head>
+
+<!--HTML Table within Body-->
+<body>
+    <table style="font-family:'Lucida Console', 'Courier New', monospace;">
+        <tr>          
+            <td>.Domestic <br>
+                <span id="domestic"><span>
+            </td>
+        </tr>
+
+        <tr>
+            <td>.Imported <br>
+                <span id="imported"></span>
+            </td>
+        </tr>
+
+        <tr>
+            <td>Domestic Cost: $<span id="domesticCost"></span></td>
+        </tr>
+        <tr>
+            <td>Imported Cost: $<span id="importedCost"></span></td>
+        </tr>
+        <tr>
+            <td>Domestic Count: <span id="domesticCount"></span></td>
+        </tr>
+        <tr>
+            <td>Imported Count: <span id="importedCount"></span></td>
+        </tr>
+    </table>
+</body>
+</html>
